@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_HOST = "tcp://jenkins-docker:2375"
+        DOCKER_TLS_CERTDIR = ""
+    }
+
     stages {
         stage('Installing Dependencies') {
             steps {
