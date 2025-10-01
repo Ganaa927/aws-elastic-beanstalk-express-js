@@ -47,6 +47,7 @@ pipeline {
             }
         }
     }
+        }
     post {
             always {
                 // enable the archive of build outputs and test reports
@@ -54,7 +55,5 @@ pipeline {
                 echo 'Artifacts archived.'
             }
         }
-
-}
 }
 
