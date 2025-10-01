@@ -3,36 +3,25 @@ pipeline {
 
     stages {
         stage('Installing Dependencies') {
-            agent {
-                docker {
-                    image 'node:16'
-                    args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker'
-                }
-            }
             steps {
-                sh 'npm install --save'
+                // Run npm in a Node container using 'docker run'
+                sh 'docker run --rm -v $PWD:/app -w /app node:16 npm install --save'
             }
         }
 
         stage('Run unit tests') {
-            agent {
-                docker {
-                    image 'node:16'
-                    args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker'
-                }
-            }
             steps {
-                sh 'npm test'
+                sh 'docker run --rm -v $PWD:/app -w /app node:16 npm test'
             }
         }
 
         stage('Security in the Pipeline') {
             steps {
-                sh 'npm install -g snyk'
+                sh 'docker run --rm -v $PWD:/app -w /app node:16 npm install -g snyk'
                 withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
-                    sh 'snyk auth $SNYK_TOKEN'
+                    sh 'docker run --rm -v $PWD:/app -w /app node:16 snyk auth $SNYK_TOKEN'
                 }
-                sh 'snyk test --severity-threshold=high'
+                sh 'docker run --rm -v $PWD:/app -w /app node:16 snyk test --severity-threshold=high'
             }
         }
 
