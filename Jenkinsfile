@@ -1,9 +1,8 @@
 pipeline {
-    agent any {
+    agent any 
         docker {
             image 'node:16'
         }
-    }
     stages {
         stage('Installing Dependencies') {
             steps {
