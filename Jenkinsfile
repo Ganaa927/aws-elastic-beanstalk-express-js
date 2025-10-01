@@ -1,61 +1,61 @@
 pipeline {
-    agent  {
-        docker {
-            image 'node:16'
-            args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker'
+    agent any
 
-        }
-    }
     stages {
         stage('Installing Dependencies') {
+            agent {
+                docker {
+                    image 'node:16'
+                    args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker'
+                }
+            }
             steps {
                 sh 'npm install --save'
             }
         }
 
         stage('Run unit tests') {
+            agent {
+                docker {
+                    image 'node:16'
+                    args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker'
+                }
+            }
             steps {
                 sh 'npm test'
             }
         }
 
         stage('Security in the Pipeline') {
-              steps {
-                  //Integrate a dependency vulnerability scanner
-                  sh 'npm install -g snyk'
-                  
-                  // Authenticate Snyk using Jenkins credential
-                  withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
-                      sh 'snyk auth $SNYK_TOKEN'
-                  }
-  
-                  // The pipeline must fail if High/Critical issues are detected.
-                  sh 'snyk test --severity-threshold=high'
-              }
-          }
-      
+            steps {
+                sh 'npm install -g snyk'
+                withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
+                    sh 'snyk auth $SNYK_TOKEN'
+                }
+                sh 'snyk test --severity-threshold=high'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t ori0927/project2:${BUILD_NUMBER} .'
             }
         }
 
-      
         stage('Push to Registry') {
             steps {
-                 withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
-                    sh "docker push ori0927/project2:${BUILD_NUMBER}"
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh 'docker push ori0927/project2:${BUILD_NUMBER}'
+                }
             }
         }
     }
-        }
-    post {
-            always {
-                // enable the archive of build outputs and test reports
-                archiveArtifacts artifacts: '**/build/**, **/test-reports/**', allowEmptyArchive: true
-                echo 'Artifacts archived.'
-            }
-        }
-}
 
+    post {
+        always {
+            archiveArtifacts artifacts: '**/build/**, **/test-reports/**', allowEmptyArchive: true
+            echo 'Artifacts archived.'
+        }
+    }
+}
