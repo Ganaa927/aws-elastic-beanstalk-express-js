@@ -4,18 +4,17 @@ pipeline {
     stages {
         stage('Installing Dependencies') {
             steps {
-                // Run npm in a Node container using 'docker run'
                 sh 'docker run --rm -v $PWD:/app -w /app node:16 npm install --save'
             }
         }
 
-        stage('Run unit tests') {
+        stage('Run Unit Tests') {
             steps {
                 sh 'docker run --rm -v $PWD:/app -w /app node:16 npm test'
             }
         }
 
-        stage('Security in the Pipeline') {
+        stage('Security Scan') {
             steps {
                 sh 'docker run --rm -v $PWD:/app -w /app node:16 npm install -g snyk'
                 withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
@@ -31,7 +30,7 @@ pipeline {
             }
         }
 
-        stage('Push to Registry') {
+        stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
