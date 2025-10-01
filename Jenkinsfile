@@ -2,8 +2,7 @@ pipeline {
     agent  {
         docker {
             image 'node:16'
-            args '-v /var/run/docker.sock:/var/run/docker.sock' 
-            // mount Docker socket so "docker build/push" works inside node:16
+            args '-u root'  // run as root inside container so npm + docker CLI work
         }
     }
     stages {
