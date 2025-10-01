@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HOST = "tcp://jenkins-docker:2375"
-        DOCKER_TLS_CERTDIR = ""
+        DOCKER_HOST = "tcp://dind:2375"
+        DOCKER_TLS_VERIFY = "0"
     }
 
     stages {
@@ -49,6 +49,10 @@ pipeline {
         always {
             archiveArtifacts artifacts: '**/build/**, **/test-reports/**', allowEmptyArchive: true
             echo 'Artifacts archived.'
+        }
+        cleanup {
+            // Clean up Docker images to save space
+            sh 'docker system prune -f || true'
         }
     }
 }
