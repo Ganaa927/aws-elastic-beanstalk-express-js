@@ -9,7 +9,7 @@ pipeline {
     environment {
         DOCKER_REGISTRY = 'ori0927'     
         IMAGE_NAME = 'project2'            
-        SNYK_TOKEN = credentials('SNYK_TOKEN) 
+        SNYK_TOKEN = credentials('SNYK_TOKEN') 
         DOCKER_HOST = 'tcp://docker:2376'
         DOCKER_TLS_VERIFY = '1'
         DOCKER_CERT_PATH = '/certs/client'
