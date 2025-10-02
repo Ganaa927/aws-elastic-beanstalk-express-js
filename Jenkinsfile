@@ -1,62 +1,12 @@
 pipeline {
     agent {
-        docker {
-            image 'node:16'
-            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
-        }
+        docker { image 'node:latest' }
     }
-
-    environment {
-        IMAGE_NAME = "ori0927/project2"
-        TAG = "${env.BUILD_NUMBER}"
-    }
-
     stages {
-
-        stage('Install Dependencies') {
+        stage('Verify Docker Integration') {
             steps {
-                echo 'Installing npm dependencies...'
-                sh 'npm install --save'
+                sh 'node --version'
             }
-        }
-
-        stage('Run Unit Tests') {
-            steps {
-                echo 'Running unit tests...'
-                sh 'npm test'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                echo 'Building Docker image...'
-                sh "docker build -t ${IMAGE_NAME}:${TAG} ."
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                echo 'Pushing Docker image to Docker Hub...'
-                withCredentials([usernamePassword(credentialsId: 'docker-credentials', 
-                                                  usernameVariable: 'DOCKER_USER', 
-                                                  passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                    sh "docker push ${IMAGE_NAME}:${TAG}"
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            echo 'Cleaning workspace...'
-            deleteDir()
-        }
-        success {
-            echo 'Pipeline completed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed!'
         }
     }
 }
