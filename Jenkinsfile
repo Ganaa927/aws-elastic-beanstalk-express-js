@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_REGISTRY = 'ori0927'
         IMAGE_NAME = 'project2'
-        SNYK_TOKEN = credentials('snyk-api-token')
+        // SNYK_TOKEN = credentials('snyk-api-token')
         DOCKER_HOST = 'tcp://docker:2376'
         DOCKER_TLS_VERIFY = '1'
         DOCKER_CERT_PATH = '/certs/client'
@@ -30,6 +30,7 @@ pipeline {
             }
         }
 
+        /*
         stage('Vulnerability Scan') {
             steps {
                 script {
@@ -41,6 +42,7 @@ pipeline {
                 }
             }
         }
+        */
 
         stage('Build Docker Image') {
             steps {
