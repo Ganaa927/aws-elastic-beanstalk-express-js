@@ -13,12 +13,12 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                echo 'Cloning repository...'
-                sh 'git clone https://github.com/Ganaa927/aws-elastic-beanstalk-express-js.git .'
-            }
-        }
+        // stage('Checkout') {
+        //     steps {
+        //         echo 'Cloning repository...'
+        //         sh 'git clone https://github.com/Ganaa927/aws-elastic-beanstalk-express-js.git .'
+        //     }
+        // }
 
         stage('Install Dependencies') {
             steps {
