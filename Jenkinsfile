@@ -43,7 +43,12 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            agent { docker { image 'docker:24-cli' args '-v /var/run/docker.sock:/var/run/docker.sock' } }
+            agent { 
+                docker { 
+                    image 'docker:24-cli'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock' 
+                }
+            }
             steps {
                 sh '''
                   docker build -t ${DOCKER_IMAGE} .
