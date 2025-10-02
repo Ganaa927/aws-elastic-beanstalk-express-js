@@ -12,11 +12,7 @@ pipeline {
     }
 
     stages {
-        stage('Setup Git') {
-            steps {
-                sh 'apt-get update && apt-get install -y git'
-            }
-        }
+
         stage('Checkout') {
             steps {
                 echo 'Cloning repository...'
