@@ -1,58 +1,118 @@
 pipeline {
-    agent any
-
-    environment {
-        DOCKER_HOST = "tcp://dind:2375"
-        DOCKER_TLS_VERIFY = "0"
+    agent {
+        docker {
+            image 'node:16'
+            args '-u root:root'
+        }
     }
-
+    
+    environment {
+        DOCKER_HOST = 'tcp://dind:2376'
+        DOCKER_TLS_VERIFY = '0'
+    }
+    
     stages {
-        stage('Installing Dependencies') {
+        stage('Checkout') {
             steps {
-                sh 'docker run --rm -v $PWD:/app -w /app node:16 npm install --save'
+                git branch: 'main', 
+                url: 'https://github.com/YOUR_USERNAME/aws-elastic-beanstalk-express-js-sample.git'
             }
         }
-
-        stage('Run Unit Tests') {
+        
+        stage('Install Dependencies') {
             steps {
-                sh 'docker run --rm -v $PWD:/app -w /app node:16 npm test'
+                sh 'npm install --save'
             }
         }
-
-        stage('Security Scan') {
+        
+        stage('Security Scan - OWASP Dependency Check') {
             steps {
-                sh 'docker run --rm -v $PWD:/app -w /app node:16 npm install -g snyk'
-                withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
-                    sh 'docker run --rm -v $PWD:/app -w /app node:16 snyk auth $SNYK_TOKEN'
+                script {
+                    // Install OWASP Dependency Check
+                    sh 'wget https://github.com/jeremylong/DependencyCheck/releases/download/v8.2.1/dependency-check-8.2.1-release.zip'
+                    sh 'unzip dependency-check-8.2.1-release.zip'
+                    
+                    // Run dependency check
+                    sh './dependency-check/bin/dependency-check.sh --project "Node.js App" --scan . --format HTML --format JSON --out ./reports'
+                    
+                    // Check for high/critical vulnerabilities
+                    sh '''
+                        if [ -f ./reports/dependency-check-report.json ]; then
+                            HIGH_VULNS=$(jq '.dependencies[]?.vulnerabilities[]?.severity? | select(. == "HIGH" or . == "CRITICAL")' ./reports/dependency-check-report.json | wc -l)
+                            if [ $HIGH_VULNS -gt 0 ]; then
+                                echo "Found $HIGH_VULNS High/Critical vulnerabilities - failing pipeline"
+                                exit 1
+                            fi
+                        fi
+                    '''
                 }
-                sh 'docker run --rm -v $PWD:/app -w /app node:16 snyk test --severity-threshold=high'
+            }
+            post {
+                always {
+                    // Archive dependency check reports
+                    archiveArtifacts artifacts: 'reports/*', allowEmptyArchive: true
+                    publishHTML target: [
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: false,
+                        keepAll: true,
+                        reportDir: 'reports',
+                        reportFiles: 'dependency-check-report.html',
+                        reportName: 'Dependency Check Report'
+                    ]
+                }
             }
         }
-
+        
+        stage('Run Tests') {
+            steps {
+                sh 'npm test'
+            }
+        }
+        
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ori0927/project2:${BUILD_NUMBER} .'
+                script {
+                    // Build Docker image using DinD service
+                    sh 'docker build -t nodejs-app:${BUILD_ID} .'
+                }
             }
         }
-
-        stage('Push to Docker Hub') {
+        
+        stage('Push to Registry') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                    sh 'docker push ori0927/project2:${BUILD_NUMBER}'
+                script {
+                    // Tag and push to Docker Hub (optional - requires credentials)
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+                        sh 'docker tag nodejs-app:${BUILD_ID} $DOCKER_USER/nodejs-app:${BUILD_ID}'
+                        sh 'docker push $DOCKER_USER/nodejs-app:${BUILD_ID}'
+                    }
                 }
             }
         }
     }
-
+    
     post {
         always {
-            archiveArtifacts artifacts: '**/build/**, **/test-reports/**', allowEmptyArchive: true
-            echo 'Artifacts archived.'
+            // Clean up Docker images
+            sh 'docker system prune -f'
+            
+            // Archive build artifacts
+            archiveArtifacts artifacts: '**/*.log, **/reports/**', allowEmptyArchive: true
         }
-        cleanup {
-            // Clean up Docker images to save space
-            sh 'docker system prune -f || true'
+        success {
+            emailext (
+                subject: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                body: "The pipeline completed successfully. Check reports at: ${env.BUILD_URL}",
+                to: "developer@example.com"
+            )
+        }
+        failure {
+            emailext (
+                subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                body: "The pipeline failed. Check logs at: ${env.BUILD_URL}",
+                to: "developer@example.com"
+            )
         }
     }
 }
