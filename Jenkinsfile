@@ -9,14 +9,11 @@ pipeline {
     environment {
         DOCKER_REGISTRY = 'ori0927'     
         IMAGE_NAME = 'project2'            
-        SNYK_TOKEN = credentials('SNYK_TOKEN') 
+        SNYK_TOKEN = credentials('snyk-api-token') 
         DOCKER_HOST = 'tcp://docker:2376'
         DOCKER_TLS_VERIFY = '1'
         DOCKER_CERT_PATH = '/certs/client'
-        /DOCKER_REGISTRY = 'ori0927'
-        DOCKER_IMAGE_NAME = 'project2'
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
-        SNYK_TOKEN = credentials('snyk-api-token')
         SEVERITY_THRESHOLD = 'high'
     }
 
@@ -48,7 +45,7 @@ pipeline {
             steps {
                 sh 'npm install -g snyk'
                 sh "snyk auth ${SNYK_TOKEN}"
-                sh 'snyk test --severity-threshold=high'
+                sh "snyk test --severity-threshold=${SEVERITY_THRESHOLD}"
             }
         }
 
@@ -63,7 +60,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                         sh "echo $PASS | docker login -u $USER --password-stdin"
                         sh "docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest"
                     }
