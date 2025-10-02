@@ -60,8 +60,10 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up...'
-            sh 'docker system prune -f || true'
+            node {
+                echo 'Cleaning up...'
+                sh 'docker system prune -f || true'
+            }
         }
         success {
             echo 'Pipeline completed successfully!'
@@ -70,4 +72,5 @@ pipeline {
             echo 'Pipeline failed!'
         }
     }
+
 }
