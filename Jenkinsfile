@@ -4,12 +4,12 @@ pipeline {
     environment {
         DOCKER_REGISTRY = 'ori0927'
         IMAGE_NAME = 'project2'
-        // SNYK_TOKEN = credentials('snyk-api-token')
+        // SNYK_TOKEN = credentials('snyk-api-token') // Commented out for now
         DOCKER_HOST = 'tcp://docker:2376'
         DOCKER_TLS_VERIFY = '1'
         DOCKER_CERT_PATH = '/certs/client'
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
-        SEVERITY_THRESHOLD = 'high'
+        // SEVERITY_THRESHOLD = 'high' // Not used as Snyk is commented
     }
 
     stages {
@@ -62,10 +62,8 @@ pipeline {
 
     post {
         always {
-            node {
-                echo 'Cleaning up...'
-                sh 'docker system prune -f || true'
-            }
+            echo 'Cleaning up...'
+            sh 'docker system prune -f || true'
         }
         success {
             echo 'Pipeline completed successfully!'
@@ -74,5 +72,4 @@ pipeline {
             echo 'Pipeline failed!'
         }
     }
-
 }
