@@ -18,6 +18,14 @@ pipeline {
                 url: 'https://github.com/Ganaa927/aws-elastic-beanstalk-express-js.git'
             }
         }
+         stage('Permissions') {
+            steps {
+                sh '''
+                    echo "Fixing workspace permissions..."
+                    sudo chown -R jenkins:jenkins $WORKSPACE
+                '''
+            }
+        }
         
         stage('Install Dependencies') {
             steps {
