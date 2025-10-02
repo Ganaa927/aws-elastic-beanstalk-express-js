@@ -1,12 +1,79 @@
 pipeline {
     agent {
-        docker { image 'node:latest' }
+        docker {
+            image 'node:16'
+            args '-u root:root'  // run as root to allow installing packages
+        }
     }
+
+    environment {
+        DOCKER_REGISTRY = 'ori0927'     
+        IMAGE_NAME = 'project2'            
+        SNYK_TOKEN = credentials('snyk-token') 
+    }
+
+    options {
+        skipDefaultCheckout false
+        timestamps()
+    }
+
     stages {
-        stage('Verify Docker Integration') {
+        stage('Checkout') {
             steps {
-                sh 'node --version'
+                checkout scm
             }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install --save'
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                sh 'npm test'
+            }
+        }
+
+        stage('Vulnerability Scan') {
+            steps {
+                sh 'npm install -g snyk'
+                sh "snyk auth ${SNYK_TOKEN}"
+                sh 'snyk test --severity-threshold=high'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh "docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest ."
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                        sh "echo $PASS | docker login -u $USER --password-stdin"
+                        sh "docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest"
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up...'
+            sh 'docker system prune -f || true'
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
