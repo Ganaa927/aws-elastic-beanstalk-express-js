@@ -8,17 +8,17 @@ pipeline {
 
     environment {
         IMAGE_NAME = "ori0927/project2"
-        TAG = "${env.BUILD_NUMBER}" // unique tag for each build
+        TAG = "${env.BUILD_NUMBER}"
     }
 
     stages {
-
-        stage('Checkout') {
-            steps {
-                echo 'Cloning repository...'
-                sh 'git clone https://github.com/Ganaa927/aws-elastic-beanstalk-express-js.git .'
-            }
-        }
+        // REMOVE the Checkout stage - Jenkins does this automatically
+        // stage('Checkout') {
+        //     steps {
+        //         echo 'Cloning repository...'
+        //         sh 'git clone https://github.com/Ganaa927/aws-elastic-beanstalk-express-js.git .'
+        //     }
+        // }
 
         stage('Install Dependencies') {
             steps {
