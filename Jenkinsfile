@@ -2,21 +2,21 @@ pipeline {
     agent {
         docker {
             image 'node:16'
-            args '-u root:root' // run as root to allow npm install and Docker commands
+            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
     environment {
         IMAGE_NAME = "ori0927/project2"
-        TAG = "${env.BUILD_NUMBER}" // each build gets a unique tag
+        TAG = "${env.BUILD_NUMBER}" // unique tag for each build
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                echo 'Checking out source code...'
-                checkout scm
+                echo 'Cloning repository...'
+                sh 'git clone https://github.com/Ganaa927/aws-elastic-beanstalk-express-js.git .'
             }
         }
 
@@ -56,7 +56,7 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up workspace...'
+            echo 'Cleaning workspace...'
             deleteDir()
         }
         success {
