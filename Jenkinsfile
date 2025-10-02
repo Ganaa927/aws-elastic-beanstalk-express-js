@@ -2,18 +2,26 @@ pipeline {
     agent {
         docker {
             image 'node:16'
-            args '-u root:root'  // run as root to allow installing packages
+            args '-u root:root -v /certs/client:/certs/client:ro -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
     environment {
         DOCKER_REGISTRY = 'ori0927'     
         IMAGE_NAME = 'project2'            
-        SNYK_TOKEN = credentials('snyk-token') 
+        SNYK_TOKEN = credentials('SNYK_TOKEN) 
+        DOCKER_HOST = 'tcp://docker:2376'
+        DOCKER_TLS_VERIFY = '1'
+        DOCKER_CERT_PATH = '/certs/client'
+        /DOCKER_REGISTRY = 'ori0927'
+        DOCKER_IMAGE_NAME = 'project2'
+        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
+        SNYK_TOKEN = credentials('snyk-api-token')
+        SEVERITY_THRESHOLD = 'high'
     }
 
     options {
-        skipDefaultCheckout false
+        skipDefaultCheckout()
         timestamps()
     }
 
