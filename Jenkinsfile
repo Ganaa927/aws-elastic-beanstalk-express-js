@@ -8,7 +8,7 @@ pipeline {
         DOCKER_HOST = 'tcp://docker:2376'
         DOCKER_TLS_VERIFY = '1'
         DOCKER_CERT_PATH = '/certs/client'
-        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
+        DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
         // SEVERITY_THRESHOLD = 'high' // Not used as Snyk is commented
     }
 
