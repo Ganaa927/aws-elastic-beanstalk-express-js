@@ -3,13 +3,13 @@ pipeline {
 
     environment {
         DOCKER_REGISTRY = 'ori0927'
-        IMAGE_NAME = 'project2'
-        // SNYK_TOKEN = credentials('snyk-api-token') // Commented out for now
+        IMAGE_NAME = 'project2'   
         DOCKER_HOST = 'tcp://docker:2376'
         DOCKER_TLS_VERIFY = '1'
         DOCKER_CERT_PATH = '/certs/client'
         DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
-        // SEVERITY_THRESHOLD = 'high' // Not used as Snyk is commented
+        SNYK_TOKEN = credentials('snyk-api-token') 
+        SEVERITY_THRESHOLD = 'high'
     }
 
     stages {
@@ -29,21 +29,21 @@ pipeline {
                 }
             }
         }
-
-        /*
         stage('Vulnerability Scan') {
             steps {
                 script {
                     docker.image('node:16').inside('-u root:root') {
+                    //Integrate a dependency vulnerability scanner
                         sh 'npm install -g snyk'
+                    // Authenticate Snyk using Jenkins credential
                         sh "snyk auth ${SNYK_TOKEN}"
+                    //The pipeline must fail if High/Critical issues are detected.
                         sh "snyk test --severity-threshold=${SEVERITY_THRESHOLD}"
                     }
                 }
             }
         }
-        */
-
+        
         stage('Build Docker Image') {
             steps {
                 sh "docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest ."
