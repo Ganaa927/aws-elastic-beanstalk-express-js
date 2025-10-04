@@ -47,9 +47,11 @@ pipeline {
                         sh 'npm install -g snyk'
                         echo 'Snyk CLI installed.'
                         
-                        echo 'Authenticating Snyk with token...'
-                        sh "snyk auth ${SNYK_TOKEN}"
-                        echo 'Snyk authentication completed.'
+                        echo 'Authenticating with Snyk...'
+                        withEnv(["SNYK_TOKEN=${SNYK_TOKEN}"]) {
+                            sh 'snyk auth $SNYK_TOKEN'
+                        }
+
 
                         echo 'Running Snyk vulnerability scan...'
                         sh '''
