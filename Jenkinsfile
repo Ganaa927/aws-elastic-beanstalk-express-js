@@ -33,9 +33,9 @@ pipeline {
             steps {
                 script {
                     docker.image('node:16').inside('-u root:root') {
-                    //Integrate a dependency vulnerability scanner
+                    //Installing snyk CLI
                         sh 'npm install -g snyk'
-                    // Authenticate Snyk using Jenkins credential
+                    // Authenticating with snyk token 
                         sh "snyk auth ${SNYK_TOKEN}"
                     //The pipeline must fail if High/Critical issues are detected.
                         sh "snyk test --severity-threshold=${SEVERITY_THRESHOLD}"
